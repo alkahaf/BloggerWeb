@@ -1,0 +1,59 @@
+﻿@model IEnumerable<BloggerWeb.Models.Blog>
+
+@{
+    ViewBag.Title = "Blog List";
+}
+
+<h2 class="text-center">Latest Blogs</h2>
+
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">@item.Title</h4>
+                        <p class="card-text">
+                            @if (item.Content.Length > 150)
+                            {
+                                @item.Content.Substring(0, 150)
+
+                                <span>...</span>
+                            }
+                            else
+                            {
+                                @item.Content
+                            }
+                        </p>
+                        <small class="text-muted">Published on @item.CreatedAt.ToString("MMMM dd, yyyy")</small>
+                        <br>
+                        <a href="@Url.Action("Details", "Blog", new { id = item.Id })" class="btn btn-primary mt-2">Read More</a>
+                        <a href="@Url.Action("Upsert", "Blog", new { id = item.Id })" class="btn btn-warning mt-2">Edit</a>
+                        <a href="@Url.Action("Delete", "Blog", new { id = item.Id })" class="btn btn-danger mt-2">Delete</a>
+                    </div>
+                </div>
+            </div>
+        }
+
+
+    </div>
+</div>
+
+<p class="text-center">
+    <a href="@Url.Action("Upsert", "Blog")" class="btn btn-success">Create a New Blog</a>
+</p>
+
+
+@section Styles {
+    <style>
+        .card {
+            border-radius: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+    </style>
+}

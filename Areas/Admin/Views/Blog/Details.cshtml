@@ -1,0 +1,14 @@
+﻿@model BloggerWeb.Models.Blog
+
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="container">
+    <h2>@Model.Title</h2>
+    <small class="text-muted">Published on @Model.CreatedAt.ToString("MMMM dd, yyyy")</small>
+    <hr>
+    <p>@Model.Content</p>
+    <br>
+    <a href="@Url.Action("Index", "Blog")" class="btn btn-primary">Back to Blogs</a>
+</div>
