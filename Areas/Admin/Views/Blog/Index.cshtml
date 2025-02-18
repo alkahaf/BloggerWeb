@@ -4,7 +4,7 @@
     ViewBag.Title = "Blog List";
 }
 
-<h2 class="text-center">Latest Blogs</h2>
+<h2 class="text-center"> Admin Page</h2>
 
 <div class="container">
     <div class="row">
@@ -15,35 +15,33 @@
                     <div class="card-body">
                         <h4 class="card-title">@item.Title</h4>
                         <p class="card-text">
-                            @if (item.Content.Length > 150)
-                            {
-                                @item.Content.Substring(0, 150)
-
-                                <span>...</span>
-                            }
-                            else
-                            {
-                                @item.Content
-                            }
+                            @(item.Content.Length >= 150 ? item.Content.Substring(0, 150) + "..." : item.Content)
                         </p>
-                        <small class="text-muted">Published on @item.CreatedAt.ToString("MMMM dd, yyyy")</small>
+                        <small class="text-muted">Published on @item.CreatedAt.ToString("MMMM dd, yyyy")</small
+                        <p>Posted by: @item.User.FullName</p>
+                        <small class="text-muted">@item.User.Role</small>
                         <br>
                         <a href="@Url.Action("Details", "Blog", new { id = item.Id })" class="btn btn-primary mt-2">Read More</a>
-                        <a href="@Url.Action("Upsert", "Blog", new { id = item.Id })" class="btn btn-warning mt-2">Edit</a>
-                        <a href="@Url.Action("Delete", "Blog", new { id = item.Id })" class="btn btn-danger mt-2">Delete</a>
+
+                        @if (Context.Session.GetString("UserRole") == "Admin") // Restrict Edit/Delete to Admin
+                        {
+                            <a href="@Url.Action("Upsert", "Blog", new { id = item.Id })" class="btn btn-warning mt-2">Edit</a>
+                            <a href="@Url.Action("Delete", "Blog", new { id = item.Id })" class="btn btn-danger mt-2">Delete</a>
+                        }
                     </div>
                 </div>
             </div>
-        }
-
-
+        } 
+       
     </div>
 </div>
 
-<p class="text-center">
-    <a href="@Url.Action("Upsert", "Blog")" class="btn btn-success">Create a New Blog</a>
-</p>
-
+@if (Context.Session.GetString("UserRole") == "Admin")
+{
+    <p class="text-center">
+        <a href="@Url.Action("Upsert", "Blog")" class="btn btn-success">Create a New Blog</a>
+    </p>
+}
 
 @section Styles {
     <style>
@@ -52,8 +50,8 @@
             transition: transform 0.3s ease-in-out;
         }
 
-        .card:hover {
-            transform: scale(1.05);
-        }
+            .card:hover {
+                transform: scale(1.05);
+            }
     </style>
 }

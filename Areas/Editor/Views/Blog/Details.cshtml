@@ -1,0 +1,9 @@
+﻿@model BloggerWeb.Models.Blog
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<h2>@Model.Title</h2>
+<p>@Model.Content</p>
+<a asp-action="Index" class="btn btn-primary">Back to List</a>

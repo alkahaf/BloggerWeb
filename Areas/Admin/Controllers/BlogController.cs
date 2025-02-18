@@ -2,100 +2,144 @@
 using Microsoft.EntityFrameworkCore;
 using BloggerWeb.Models;
 using System.Linq;
+using System.Threading.Tasks;
 using BloggerWeb.Data;
+using Microsoft.AspNetCore.Http;
+using System;
 
-public class BlogController : Controller
+namespace BloggerWeb.Areas.Admin.Controllers
 {
-    private readonly BlogDbContext _context;
-
-    public BlogController(BlogDbContext context)
+    [Area("Admin")]
+    public class BlogController : Controller
     {
-        _context = context;
-    }
-    // GET: Blog
-    public ActionResult Index()
-    {
-        return View(_context.Blogs.ToList());
-    }
+        private readonly BlogDbContext _context;
 
-    // GET: Blog/Upsert/{id?} - If id is provided, edit; else create new
-    public IActionResult Upsert(int? id)
-    {
-        Blog blog = new Blog();
-
-        if (id == null) // Create Mode
+        public BlogController(BlogDbContext context)
         {
+            _context = context;
+        }
+
+        // GET: Blog
+        public async Task<IActionResult> Index()
+        {
+            if (HttpContext.Session.GetString("UserRole") != "Admin")
+            {
+                return RedirectToAction("Login", "Account", new { area = "Admin" });
+            }
+
+            var blogs = await _context.Blogs.Include(b => b.User).ToListAsync();
+            return View(blogs);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Upsert(int? id)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "Admin")
+            {
+                return RedirectToAction("Login", "Account", new { area = "Admin" });
+            }
+
+            Blog blog = new Blog();
+
+            if (id.HasValue) // Editing mode
+            {
+                blog = await _context.Blogs.FirstOrDefaultAsync(b => b.Id == id);
+                if (blog == null)
+                {
+                    return NotFound();
+                }
+            }
+
             return View(blog);
         }
 
-        // Edit Mode - Fetch existing blog
-        blog = _context.Blogs.FirstOrDefault(b => b.Id == id);
-        if (blog == null)
-        {
-            return NotFound();
-        }
+        
 
-        return View(blog);
-    }
-
-    // POST: Blog/Upsert
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public IActionResult Upsert(Blog blog)
-    {
-        if (ModelState.IsValid)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Upsert(Blog blog)
         {
-            if (blog.Id == 0) // New Blog (Create)
+            // Check if UserId is in session
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
             {
-                _context.Blogs.Add(blog);
+                return RedirectToAction("Login", "Account", new { area = "Admin" });
             }
-            else // Existing Blog (Update)
+
+            // Log the userId for debugging purposes
+            Console.WriteLine(userId);
+
+           
+
+            if (blog.Id == 0) // Create Mode
             {
+                blog.UserId = userId; // Assign current user
+                blog.CreatedAt = DateTime.Now;
+                await _context.Blogs.AddAsync(blog);
+            }
+            else // Update Mode
+            {
+                var existingBlog = await _context.Blogs.FirstOrDefaultAsync(b => b.Id == blog.Id);
+                if (existingBlog != null)
+                {
+                    blog.UserId = existingBlog.UserId; // Ensure UserId remains unchanged
+                    blog.CreatedAt = existingBlog.CreatedAt; // Preserve original creation date
+                }
+
                 _context.Blogs.Update(blog);
             }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
 
-        return View(blog);
-    }
-
-    // GET: Blog/Delete/5
-    public IActionResult Delete(int id)
-    {
-        var blog = _context.Blogs.FirstOrDefault(b => b.Id == id);
-        if (blog == null)
+        // GET: Blog/Delete/5
+        public async Task<IActionResult> Delete(int id)
         {
-            return NotFound();
-        }
-        return View(blog);
-    }
+            if (HttpContext.Session.GetString("UserRole") != "Admin")
+            {
+                return RedirectToAction("Login", "Account", new { area = "Admin" });
+            }
 
-    // POST: Blog/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public IActionResult DeleteConfirmed(int id)
-    {
-        var blog = _context.Blogs.Find(id);
-        if (blog == null)
-        {
-            return NotFound();
+            var blog = await _context.Blogs.FirstOrDefaultAsync(b => b.Id == id);
+            if (blog == null)
+            {
+                return NotFound();
+            }
+            return View(blog);
         }
 
-        _context.Blogs.Remove(blog);
-        _context.SaveChanges();
-        return RedirectToAction("Index");
-    }
-    public IActionResult Details(int id)
-    {
-        var blog = _context.Blogs.FirstOrDefault(b => b.Id == id);
-        if (blog == null)
+        // POST: Blog/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            return NotFound();
+            if (HttpContext.Session.GetString("UserRole") != "Admin")
+            {
+                return RedirectToAction("Login", "Account", new { area = "Admin" });
+            }
+
+            var blog = await _context.Blogs.FindAsync(id);
+            if (blog == null)
+            {
+                return NotFound();
+            }
+
+            _context.Blogs.Remove(blog);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
         }
 
-        return View(blog);
-    }
+        // GET: Blog/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var blog = await _context.Blogs.Include(b => b.User).FirstOrDefaultAsync(b => b.Id == id);
+            if (blog == null)
+            {
+                return NotFound();
+            }
 
+            return View(blog);
+        }
+    }
 }

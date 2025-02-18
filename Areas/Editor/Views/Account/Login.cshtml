@@ -1,0 +1,28 @@
+﻿@{
+    ViewBag.Title = "Editor Login";
+}
+
+<h2>Editor Login</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="post" asp-action="Login">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+
+    <p class="mt-3">Don't have an account? <a href="@Url.Action("Register")">Register here</a></p>
+</form>
