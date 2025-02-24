@@ -79,31 +79,35 @@ namespace BloggerWeb.Areas.Editor.Controllers
             }
             else // Edit - Ensure only the owner can update
             {
-                var existingBlog = _context.Blogs.AsNoTracking()
-                .FirstOrDefault(b => b.Id == blog.Id);
-
+                var existingBlog = await _context.Blogs.FirstOrDefaultAsync(b => b.Id == blog.Id && b.UserId == userId);
                 if (existingBlog == null)
                 {
                     return NotFound();
                 }
 
-                _context.Blogs.Update(blog);
+                // Update properties
+                existingBlog.Title = blog.Title;
+                existingBlog.Content = blog.Content;
+                existingBlog.CreatedAt = blog.CreatedAt;
+
+                _context.Blogs.Update(existingBlog);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
 
+
         // GET: Editor/Blog/Delete/5
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            string? editorUsername = HttpContext.Session.GetString("Username");
-            if (editorUsername == null)
+            string? userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
             {
                 return RedirectToAction("Login", "Account", new { area = "Editor" });
             }
 
-            var blog = _context.Blogs.FirstOrDefault(b => b.Id == id);
+            var blog = await _context.Blogs.FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
             if (blog == null)
             {
                 return NotFound();
@@ -112,27 +116,29 @@ namespace BloggerWeb.Areas.Editor.Controllers
             return View(blog);
         }
 
+
         // POST: Editor/Blog/DeleteConfirmed/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            string? editorUsername = HttpContext.Session.GetString("Username");
-            if (editorUsername == null)
+            string? userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
             {
                 return RedirectToAction("Login", "Account", new { area = "Editor" });
             }
 
-            var blog = _context.Blogs.FirstOrDefault(b => b.Id == id );
+            var blog = await _context.Blogs.FirstOrDefaultAsync(b => b.Id == id && b.UserId == userId);
             if (blog == null)
             {
                 return NotFound();
             }
 
             _context.Blogs.Remove(blog);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
+
 
         // GET: Editor/Blog/Details/5
         public IActionResult Details(int id)

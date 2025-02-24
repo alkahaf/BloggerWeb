@@ -34,13 +34,13 @@
                                 @if (Context.Session.GetString("UserRole") == "Admin" ||
                                (Context.Session.GetString("UserRole") == "Editor" && Context.Session.GetString("UserId") == item.UserId.ToString()))
                                 {
-                                    <a href="@Url.Action("Edit", "Blog", new { id = item.Id, area = "Editor" })" class="btn btn-warning m-1  btn-sm">Edit</a>
+                                    <a href="@Url.Action("Upsert", "Blog", new { id = item.Id, area = "Editor" })" class="btn btn-warning m-1  btn-sm">Edit</a>
                                 }
 
                                 @if (Context.Session.GetString("UserRole") == "Admin" ||
                                (Context.Session.GetString("UserRole") == "Editor" && Context.Session.GetString("UserId") == item.UserId.ToString()))
                                 {
-                                    <a href="@Url.Action("Delete", "Blog", new { id = item.Id, area = "Editor" })" class="btn btn-danger m-1   btn-sm" onclick="return confirm('Are you sure you want to delete this post?');">Delete</a>
+                                     <a href="@Url.Action("Delete", "Blog", new { id = item.Id, area = "Editor" })" class="btn btn-danger m-1   btn-sm" onclick="return confirm('Are you sure you want to delete this post?');">Delete</a> 
                                 }
                             </div>
 
